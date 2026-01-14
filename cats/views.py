@@ -1,6 +1,8 @@
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 
 from .models import Achievement, Cat, User
 
@@ -14,9 +16,25 @@ class CatViewSet(viewsets.ModelViewSet):
     queryset = Cat.objects.all()
     serializer_class = CatSerializer
     permission_classes = (OwnerOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,
+                       filters.OrderingFilter)
+    filterset_fields = ('color', 'birth_year')
+    search_fields = ('^name',)
+    ordering_fields = ('name', 'birth_year')
+    ordering = ('birth_year',)
     pagination_class = CatsPagination
     throttle_classes = (AnonRateThrottle, WorkingHoursRateThrottle, ScopedRateThrottle)
     throttle_scope = 'low_request'
+
+    def get_queryset(self):
+        queryset = Cat.objects.all()
+        # Добыть параметр color из GET-запроса
+        color = self.request.query_params.get('color')
+        if color is not None:
+            #  через ORM отфильтровать объекты модели Cat
+            #  по значению параметра color, полученного в запросе
+            queryset = queryset.filter(color=color)
+        return queryset 
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
