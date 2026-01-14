@@ -4,6 +4,7 @@ from rest_framework.validators import UniqueTogetherValidator
 import datetime as dt
 
 from .models import CHOICES, Achievement, AchievementCat, Cat, User
+from .throttling import WorkingHoursRateThrottle
 
 
 class UserSerializer(serializers.ModelSerializer):
